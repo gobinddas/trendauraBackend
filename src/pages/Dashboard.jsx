@@ -94,6 +94,99 @@ const Dashboard = () => {
                     value={`${stats.stockAlert}`} />
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+
+                <div className="bg-white rounded-lg shadow p-4">
+                    <h2 className="text-lg font-semibold mb-2">Categories</h2>
+                    <ul className="list-disc pl-5 text-sm text-gray-600">
+                        {stats.categoryList.map((cat, i) => (
+                            <li key={i}> {cat} </li>
+                        ))}
+                    </ul>
+                </div>
+
+                <div className="bg-white rounded-lg shadow p-4">
+                    <h2 className="text-lg font-semibold mb-2">SubCategories</h2>
+                    <ul className="list-disc pl-5 text-sm text-gray-600">
+                        {subcategories.map((sub, i) => {
+                            const categoryName = categories.find((cat) => cat.id === sub.categoryId)?.name || "Unknown";
+                            return (
+                                <li key={i} >
+                                    {sub.name} {""}
+                                    <span className="text-gray-400 text-xs" >  (Category : {categoryName} ) </span>
+                                </li>
+                            )
+                        })}
+                    </ul>
+                </div>
+
+
+            </div>
+
+
+            <div className="bg-white rounded-lg shadow p-4">
+                <h2 className="text-lg font-semibold mb-4">Low Stock Products</h2>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {stats.lowStockProducts.map((p)=>(
+                            <div key={p.id} className="border p-3 rounded flex space-x-4">
+                                <img src={p.mainImage} 
+                                alt={p.name}
+                                className="w-16 h-16 object-cover rounded"
+                                />
+                                <div>
+                                    <div className="font-semibold">
+                                        {p.name}
+                                    </div>
+                                    <div className="text-sm text-gray-600">
+                                        NPR {p.price}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-4">
+                            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                <Clock size={18} /> Recent Orders
+                            </h2>
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="text-left border-b border-gray-200">
+                                        <th className="py-2">Order ID</th>
+                                        <th>Customer</th>
+                                        <th>Amount</th>
+                                        <th>Products</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {stats.recentOrders.map((order) => (
+                                        <tr key={order.id} className="border-b border-gray-100">
+                                            <td className="py-2">{order.id}</td>
+                                            <td>{order.customer}</td>
+                                            <td>NPR {order.amount}</td>
+                                            <td>{order.quantity}</td>
+                                            <td>
+                                                <span
+                                                    className={`px-2 py-1 rounded-full text-xs font-medium 
+                                ${order.status === "Delivered"
+                                                            ? "bg-green-100 text-green-600"
+                                                            : order.status === "Shipped"
+                                                                ? "bg-blue-100 text-blue-600"
+                                                                : "bg-yellow-100 text-yellow-600"
+                                                        }`}
+                                                >
+                                                    {order.status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
 
         </div>
     )
