@@ -4,10 +4,9 @@ export const products = [
     name: "Classic Black Hoodie",
     slug: "classic-black-hoodie",
     description: "A cozy, comfortable black hoodie made from premium cotton.",
-    category: "women",
-    subcategory: "Hoodies",
+    categoryId: 2, // Women
+    subcategoryId: 4, // Hoodies
     price: 3000,
-
     sizes: ["S", "M", "L", "XL"],
     colors: ["Black", "Gray"],
     mainImage: "/banner1.jpg",
@@ -27,8 +26,8 @@ export const products = [
     name: "Urban Blue Jeans",
     slug: "urban-blue-jeans",
     description: "Trendy blue jeans for everyday wear.",
-    category: "Men",
-    subcategory: "Jeans",
+    categoryId: 1, // Men
+    subcategoryId: 1, // Jeans
     price: 3500,
     discountPrice: 3200,
     sizes: ["S", "M", "L", "XL"],
@@ -50,8 +49,8 @@ export const products = [
     name: "White Cotton T-Shirt",
     slug: "white-cotton-tshirt",
     description: "A premium white t-shirt for a clean, classic look.",
-    category: "women",
-    subcategory: "T-Shirts",
+    categoryId: 2, // Women
+    subcategoryId: 5, // T-Shirts (Women)
     price: 1200,
     discountPrice: 1000,
     sizes: ["S", "M", "L", "XL"],
@@ -73,8 +72,8 @@ export const products = [
     name: "Slim Fit Jacket",
     slug: "slim-fit-jacket",
     description: "A stylish slim fit jacket for cool evenings.",
-    category: "Men",
-    subcategory: "Jackets",
+    categoryId: 1, // Men
+    subcategoryId: 2, // Jackets
     price: 4200,
     discountPrice: 3900,
     sizes: ["M", "L", "XL"],
@@ -96,10 +95,9 @@ export const products = [
     name: "Summer Shorts",
     slug: "summer-shorts",
     description: "Lightweight shorts perfect for summer.",
-    category: "Men",
-    subcategory: "Shorts",
+    categoryId: 1, // Men
+    subcategoryId: 3, // Shorts
     price: 1800,
-
     sizes: ["S", "M", "L"],
     colors: ["Beige", "Blue"],
     mainImage: "/banner5.jpg",
@@ -114,14 +112,13 @@ export const products = [
     createdAt: "2025-06-27T10:40:00Z",
     updatedAt: "2025-06-27T12:40:00Z"
   },
-  
   {
     id: "p12",
     name: "Graphic T-Shirt",
     slug: "graphic-tshirt",
     description: "A cool graphic t-shirt for everyday style.",
-    category: "Unisex",
-    subcategory: "T-Shirts",
+    categoryId: 3, // Unisex
+    subcategoryId: 6, // T-Shirts (Unisex)
     price: 1500,
     discountPrice: 1200,
     sizes: ["S", "M", "L", "XL"],
@@ -137,9 +134,9 @@ export const products = [
     tags: ["tshirt", "graphic", "cool"],
     createdAt: "2025-06-27T11:50:00Z",
     updatedAt: "2025-06-27T13:50:00Z"
-  },
-  
+  }
 ];
+
 
 export const users = [
   {
