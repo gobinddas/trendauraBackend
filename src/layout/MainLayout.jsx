@@ -8,8 +8,9 @@ import {
 
 const links = [
   { to: '/', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-  { to: '/products', label: 'Products', icon: <Package size={18} /> },
   { to: '/categories', label: 'Categories', icon: <List size={18} /> },
+  { to: '/products', label: 'Products', icon: <Package size={18} /> },
+  
   { to: '/users', label: 'Users', icon: <Users size={18} /> },
   { to: '/orders', label: 'Orders', icon: <ShoppingCart size={18} /> },
   { to: '/cart-wishlist', label: 'Wishlist', icon: <Heart size={18} /> },
