@@ -2,38 +2,38 @@ import React, { useState } from "react";
 import {
   categories as initialCategories,
   subcategories as initialSubcategories,
-  products
+  products,
 } from "../components/data/dummydata";
 
 const CategoryManagement = () => {
   const [categories, setCategories] = useState(initialCategories);
   const [subcategories, setSubcategories] = useState(initialSubcategories);
   const [newCategory, setNewCategory] = useState("");
-  const [newSubcategory, setNewSubcategory] = useState("");
+  const [newSubCategory, setNewSubCategory] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
 
   const handleAddCategory = (e) => {
     e.preventDefault();
     if (!newCategory.trim()) return;
-    const newId = categories.length + 1;
-    setCategories([...categories, { id: newId, name: newCategory }]);
+    const catId = categories.length + 1;
+    setCategories([...categories, { id: catId, name: newCategory }]);
     setNewCategory("");
   };
 
   const handleAddSubcategory = (e) => {
     e.preventDefault();
-    if (!newSubcategory.trim() || !selectedCategoryId) return;
+    if (!newSubCategory.trim() || !selectedCategoryId) return;
     const newId = subcategories.length + 1;
     setSubcategories([
       ...subcategories,
       {
         id: newId,
-        name: newSubcategory,
-        categoryId: Number(selectedCategoryId)
-      }
+        name: newSubCategory,
+        categoryId: Number(selectedCategoryId),
+      },
     ]);
-    setNewSubcategory("");
     setSelectedCategoryId("");
+    setNewSubCategory("");
   };
 
   const handleDeleteCategory = (id) => {
@@ -41,9 +41,8 @@ const CategoryManagement = () => {
     const hasSubProduct = subcategories
       .filter((s) => s.categoryId === id)
       .some((s) => products.some((p) => p.subcategoryId === s.id));
-
     if (hasProducts || hasSubProduct) {
-      alert("Cannot delete: Category or its subcategories have products.");
+      alert("Cannot delete : Category or its subcategories have products.");
       return;
     }
 
@@ -52,29 +51,20 @@ const CategoryManagement = () => {
   };
 
   const handleDeleteSubcategory = (id) => {
-    const hasProducts = products.some((p) => p.subcategoryId === id);
+    const hasProducts = products.some((p) => p.subcategoryId == id);
     if (hasProducts) {
-      alert("Cannot delete: Subcategory has products.");
-      return;
+      return alert("Product already is in subcategory");
     }
     setSubcategories(subcategories.filter((s) => s.id !== id));
   };
 
-  const getProductCountBySubcategory = (subId) =>
-    products.filter((p) => p.subcategoryId === subId).length;
-
-  const getTotalProductCountInCategory = (category) => {
-    const subIds = subcategories
-      .filter((s) => s.categoryId === category.id)
-      .map((s) => s.id);
-
-    const matchingProducts = products.filter(
-      (p) => p.categoryId === category.id || subIds.includes(p.subcategoryId)
-    );
-
-    const uniqueIds = new Set(matchingProducts.map((p) => p.id));
-    return uniqueIds.size;
+  const getProductCountBySubcategory = (subId) => {
+   return products.filter((p) => p.subcategoryId === subId).length
   };
+
+  const getTotalProductCountInCategory = (catId) =>{
+    return products.filter((p)=> p.categoryId === catId).length
+  }
 
   return (
     <div className="space-y-8">
@@ -112,8 +102,8 @@ const CategoryManagement = () => {
         <div className="flex flex-col md:flex-row gap-3">
           <input
             type="text"
-            value={newSubcategory}
-            onChange={(e) => setNewSubcategory(e.target.value)}
+            value={newSubCategory}
+            onChange={(e) => setNewSubCategory(e.target.value)}
             placeholder="Enter subcategory name"
             className="border rounded px-3 py-2 w-full"
           />
@@ -149,12 +139,10 @@ const CategoryManagement = () => {
                 key={cat.id}
                 className="flex justify-between items-center border-b pb-1"
               >
-                <span>
-                  {cat.name} ({getTotalProductCountInCategory(cat)} products)
-                </span>
+                <span>{cat.name} ({getTotalProductCountInCategory(cat.id)} products)  </span>
                 <button
-                  onClick={() => handleDeleteCategory(cat.id)}
                   className="text-red-600 hover:underline text-xs"
+                  onClick={() => handleDeleteCategory(cat.id)}
                 >
                   Delete
                 </button>
@@ -177,12 +165,12 @@ const CategoryManagement = () => {
                   <span>
                     {sub.name} ({getProductCountBySubcategory(sub.id)} products)
                     <span className="text-gray-400 text-xs ml-2">
-                      in {parent?.name || "Unknown"}
+                      in ({parent?.name || "Unknown"})
                     </span>
                   </span>
                   <button
-                    onClick={() => handleDeleteSubcategory(sub.id)}
                     className="text-red-600 hover:underline text-xs"
+                    onClick={() => handleDeleteSubcategory(sub.id)}
                   >
                     Delete
                   </button>
