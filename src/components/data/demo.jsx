@@ -1,199 +1,104 @@
-import React, { useState } from "react";
-import {
-  categories as initialCategories,
-  subcategories as initialSubcategories,
-  products
-} from "../components/data/dummydata";
+import React, { useState } from 'react'
+import { products, categories } from '../components/data/dummydata'
 
-const CategoryManagement = () => {
-  const [categories, setCategories] = useState(initialCategories);
-  const [subcategories, setSubcategories] = useState(initialSubcategories);
-  const [newCategory, setNewCategory] = useState("");
-  const [newSubcategory, setNewSubcategory] = useState("");
-  const [selectedCategoryId, setSelectedCategoryId] = useState("");
-
-  const handleAddCategory = (e) => {
-    e.preventDefault();
-    if (!newCategory.trim()) return;
-    const newId = categories.length + 1;
-    setCategories([...categories, { id: newId, name: newCategory }]);
-    setNewCategory("");
-  };
-
-  const handleAddSubcategory = (e) => {
-    e.preventDefault();
-    if (!newSubcategory.trim() || !selectedCategoryId) return;
-    const newId = subcategories.length + 1;
-    setSubcategories([
-      ...subcategories,
-      {
-        id: newId,
-        name: newSubcategory,
-        categoryId: Number(selectedCategoryId)
-      }
-    ]);
-    setNewSubcategory("");
-    setSelectedCategoryId("");
-  };
-
-  const handleDeleteCategory = (id) => {
-    const hasProducts = products.some((p) => p.categoryId === id);
-    const hasSubProduct = subcategories
-      .filter((s) => s.categoryId === id)
-      .some((s) => products.some((p) => p.subcategoryId === s.id));
-
-    if (hasProducts || hasSubProduct) {
-      alert("Cannot delete: Category or its subcategories have products.");
-      return;
-    }
-
-    setCategories(categories.filter((c) => c.id !== id));
-    setSubcategories(subcategories.filter((sub) => sub.categoryId !== id));
-  };
-
-  const handleDeleteSubcategory = (id) => {
-    const hasProducts = products.some((p) => p.subcategoryId === id);
-    if (hasProducts) {
-      alert("Cannot delete: Subcategory has products.");
-      return;
-    }
-    setSubcategories(subcategories.filter((s) => s.id !== id));
-  };
-
-  const getProductCountBySubcategory = (subId) =>
-    products.filter((p) => p.subcategoryId === subId).length;
-
-  const getTotalProductCountInCategory = (category) => {
-    const subIds = subcategories
-      .filter((s) => s.categoryId === category.id)
-      .map((s) => s.id);
-
-    const matchingProducts = products.filter(
-      (p) => p.categoryId === category.id || subIds.includes(p.subcategoryId)
-    );
-
-    const uniqueIds = new Set(matchingProducts.map((p) => p.id));
-    return uniqueIds.size;
-  };
+const ProductManagement = () => {
+  // UI state for preview modal (not functional yet)
+  const [previewProduct, setPreviewProduct] = useState(null)
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-gray-800">Category Management</h1>
-
-      {/* Add Category */}
-      <form
-        onSubmit={handleAddCategory}
-        className="bg-white p-4 rounded shadow space-y-3"
-      >
-        <h2 className="text-lg font-semibold">Add Category</h2>
-        <div className="flex gap-3">
-          <input
-            type="text"
-            value={newCategory}
-            onChange={(e) => setNewCategory(e.target.value)}
-            placeholder="Enter category name"
-            className="border rounded px-3 py-2 w-full"
-          />
-          <button
-            type="submit"
-            className="bg-blue-600 text-white px-4 py-2 rounded"
-          >
-            Add
-          </button>
-        </div>
-      </form>
-
-      {/* Add Subcategory */}
-      <form
-        onSubmit={handleAddSubcategory}
-        className="bg-white p-4 rounded shadow space-y-3"
-      >
-        <h2 className="text-lg font-semibold">Add Subcategory</h2>
-        <div className="flex flex-col md:flex-row gap-3">
-          <input
-            type="text"
-            value={newSubcategory}
-            onChange={(e) => setNewSubcategory(e.target.value)}
-            placeholder="Enter subcategory name"
-            className="border rounded px-3 py-2 w-full"
-          />
-          <select
-            value={selectedCategoryId}
-            onChange={(e) => setSelectedCategoryId(e.target.value)}
-            className="border rounded px-3 py-2 w-full md:w-1/3"
-          >
-            <option value="">Select Category</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
-          <button
-            type="submit"
-            className="bg-green-600 text-white px-4 py-2 rounded"
-          >
-            Add
-          </button>
-        </div>
-      </form>
-
-      {/* Display Categories & Subcategories */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Categories */}
-        <div className="bg-white p-4 rounded shadow">
-          <h2 className="text-lg font-semibold mb-2">Categories</h2>
-          <ul className="space-y-2 text-sm text-gray-700">
-            {categories.map((cat) => (
-              <li
-                key={cat.id}
-                className="flex justify-between items-center border-b pb-1"
-              >
-                <span>
-                  {cat.name} ({getTotalProductCountInCategory(cat)} products)
-                </span>
-                <button
-                  onClick={() => handleDeleteCategory(cat.id)}
-                  className="text-red-600 hover:underline text-xs"
-                >
-                  Delete
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Subcategories */}
-        <div className="bg-white p-4 rounded shadow">
-          <h2 className="text-lg font-semibold mb-2">Subcategories</h2>
-          <ul className="space-y-2 text-sm text-gray-700">
-            {subcategories.map((sub) => {
-              const parent = categories.find((c) => c.id === sub.categoryId);
-              return (
-                <li
-                  key={sub.id}
-                  className="flex justify-between items-center border-b pb-1"
-                >
-                  <span>
-                    {sub.name} ({getProductCountBySubcategory(sub.id)} products)
-                    <span className="text-gray-400 text-xs ml-2">
-                      in {parent?.name || "Unknown"}
-                    </span>
-                  </span>
-                  <button
-                    onClick={() => handleDeleteSubcategory(sub.id)}
-                    className="text-red-600 hover:underline text-xs"
-                  >
-                    Delete
-                  </button>
-                </li>
-              ); 
-            })}
-          </ul>
-        </div>
+    <div className="p-6">
+      {/* Top Controls */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        {/* Add Product Button */}
+        <button className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 w-full md:w-auto">
+          + Add Product
+        </button>
+        {/* Search Bar */}
+        <input
+          type="text"
+          placeholder="Search product..."
+          className="border px-3 py-2 rounded w-full md:w-1/3"
+        />
+        {/* Category Filter */}
+        <select className="border px-3 py-2 rounded w-full md:w-auto">
+          <option value="">All Categories</option>
+          {Array.from(new Set(products.map(p => p.category))).map(cat => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
       </div>
-    </div>
-  );
-};
 
-export default CategoryManagement;
+      {/* Product Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {products.slice(0, 16).map(product => (
+          <div key={product.id} className="bg-white rounded shadow p-4 flex flex-col">
+            <div className="relative group mb-3">
+              <img
+                src={product.mainImage}
+                alt={product.name}
+                className="h-40 w-full object-cover rounded"
+              />
+              <button
+                className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-50 transition text-white opacity-0 group-hover:opacity-100 rounded"
+                onClick={() => setPreviewProduct(product)}
+              >
+                Preview
+              </button>
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-lg">{product.name}</h3>
+              <div className="text-sm text-gray-500 mb-1">{product.category}</div>
+              <div className="font-bold text-blue-600 mb-1">
+                ₹{product.discountPrice || product.price}
+                {product.discountPrice && (
+                  <span className="text-gray-400 line-through ml-2 text-sm">₹{product.price}</span>
+                )}
+              </div>
+              <div className="text-xs text-gray-400">Brand: {product.brand}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Pagination */}
+      <div className="flex justify-center mt-8 gap-2">
+        <button className="px-3 py-1 rounded border bg-white hover:bg-gray-100">Prev</button>
+        <button className="px-3 py-1 rounded border bg-blue-600 text-white">1</button>
+        <button className="px-3 py-1 rounded border bg-white hover:bg-gray-100">2</button>
+        <button className="px-3 py-1 rounded border bg-white hover:bg-gray-100">Next</button>
+      </div>
+
+      {/* Preview Modal (UI only, not functional) */}
+      {previewProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg relative">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-black"
+              onClick={() => setPreviewProduct(null)}
+            >
+              ×
+            </button>
+            <img src={previewProduct.mainImage} alt={previewProduct.name} className="w-full h-56 object-cover rounded mb-4" />
+            <h2 className="text-2xl font-bold mb-2">{previewProduct.name}</h2>
+            <div className="mb-2 text-gray-600">{previewProduct.category} / {previewProduct.subcategory}</div>
+            <div className="mb-2">{previewProduct.description}</div>
+            <div className="mb-2 font-bold text-blue-600">
+              ₹{previewProduct.discountPrice || previewProduct.price}
+              {previewProduct.discountPrice && (
+                <span className="text-gray-400 line-through ml-2 text-sm">₹{previewProduct.price}</span>
+              )}
+            </div>
+            <div className="mb-2 text-sm">Sizes: {previewProduct.sizes.join(', ')}</div>
+            <div className="mb-2 text-sm">Colors: {previewProduct.colors.join(', ')}</div>
+            <div className="mb-2 text-sm">Brand: {previewProduct.brand}</div>
+            <div className="mb-2 text-sm">Material: {previewProduct.material}</div>
+            <div className="mb-2 text-sm">Rating: {previewProduct.rating} ({previewProduct.numReviews} reviews)</div>
+            <div className="mb-2 text-xs text-gray-400">Created: {new Date(previewProduct.createdAt).toLocaleString()}</div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default ProductManagement
