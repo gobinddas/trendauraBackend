@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   products,
   categories,
@@ -11,18 +11,22 @@ const ProductManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const itemsperPage = 4;
+  const modalRef = useRef(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredProducts = products.filter(
-    (p) => !selectedCategory || p.categoryId === Number(selectedCategory)
-  );
-
-  const totalPages = Math.ceil(filteredProducts.length / itemsperPage);
-
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * itemsperPage,
-    currentPage * itemsperPage
-  );
-
+  useEffect(() => {
+    const handleClikeOutside = (e) => {
+      if (modalRef.current && !modalRef.current.contains(e.target)) {
+        setIsPreviewOpen(false);
+      }
+    };
+    if (isPreviewOpen) {
+      document.addEventListener("mousedown", handleClikeOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClikeOutside);
+    };
+  }, [isPreviewOpen]);
   const getCategoryName = (id) => {
     const cat = categories.find((item) => item.id === id);
     return cat.name;
@@ -32,8 +36,32 @@ const ProductManagement = () => {
     const subCat = subcategories.find((item) => item.id === id);
     return subCat.name;
   };
+  const filteredProducts = products.filter((p) => {
+    const matchesCategory =
+      !selectedCategory || p.categoryId === Number(selectedCategory);
+    const matchesSearch =
+      !searchTerm ||
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      getSubcategoryName(p.subcategoryId)
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      getCategoryName(p.categoryId)
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
-  console.log(selectedCategory);
+  const totalPages = Math.ceil(filteredProducts.length / itemsperPage);
+
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsperPage,
+    currentPage * itemsperPage
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory]);
+
   return (
     <div className="p-6">
       {/* Top Controls */}
@@ -47,6 +75,8 @@ const ProductManagement = () => {
           type="text"
           placeholder="Search product..."
           className="border px-3 py-2 rounded w-full md:w-1/3"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
         {/* Category Filter */}
         <div className="flex gap-2 w-full md:w-auto">
@@ -78,9 +108,13 @@ const ProductManagement = () => {
                 alt="name"
                 className="h-40 w-full object-cover rounded"
               />
-              <button className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-50 transition text-white opacity-0 group-hover:opacity-100 rounded" 
-              onClick={()=> {setIsPreviewOpen(true);
-                setSelectedProduct(item);}} >
+              <button
+                className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-50 transition text-white opacity-0 group-hover:opacity-100 rounded"
+                onClick={() => {
+                  setIsPreviewOpen(true);
+                  setSelectedProduct(item);
+                }}
+              >
                 Preview
               </button>
             </div>
@@ -137,12 +171,16 @@ const ProductManagement = () => {
       </div>
 
       {/* Preview Modal */}
-      {isPreviewOpen && selectedProduct &&(
+      {isPreviewOpen && selectedProduct && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl relative overflow-y-auto max-h-[90vh]">
+          <div
+            ref={modalRef}
+            className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl relative overflow-y-auto max-h-[90vh]"
+          >
             <button
               className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl"
-              aria-label="Close preview" onClick={()=> setIsPreviewOpen(false)}
+              aria-label="Close preview"
+              onClick={() => setIsPreviewOpen(false)}
             >
               ×
             </button>
@@ -153,56 +191,85 @@ const ProductManagement = () => {
                 className="w-40 h-40 object-cover rounded border"
               />
               <div className="flex flex-col gap-2">
-                {selectedProduct.otherImages?.map(img, i)=>{}}
-                <img
-                  src="./banner1.jpg"
-                  alt="other images"
-                  className="w-20 h-20 object-cover rounded border"
-                />
+                {selectedProduct.secondaryImages?.map((img, i) => (
+                  <img
+                    src={img}
+                    key={i}
+                    alt="other images"
+                    alt={`${selectedProduct.name} ${i + 1}`}
+                    className="w-20 h-20 object-cover rounded border"
+                  />
+                ))}
               </div>
             </div>
-            <h2 className="text-2xl font-bold mb-2">Black Hoodie</h2>
+            <h2 className="text-2xl font-bold mb-2">
+              {" "}
+              {selectedProduct.name}{" "}
+            </h2>
             <div className="mb-2 text-gray-600">
-              <span className="font-semibold">Category:</span> Men / Hoodie
+              <span className="font-semibold">Category:</span>{" "}
+              {getCategoryName(selectedProduct.categoryId)} /{" "}
+              {getSubcategoryName(selectedProduct.subcategoryId)}
             </div>
-            <div className="mb-2">Good authenticated product</div>
+            <div className="mb-2">{selectedProduct.description}</div>
             <div className="mb-2 font-bold text-blue-600">
-              ₹1800
+              NPR {selectedProduct.price}
               <span className="text-gray-400 line-through ml-2 text-sm">
-                ₹700
+                NPR{selectedProduct.discountPrice}
               </span>
             </div>
             <div className="mb-2 text-sm">
-              <span className="font-semibold">Sizes:</span> l
+              <span className="font-semibold">Sizes:</span>{" "}
+              {selectedProduct.sizes?.join(",")}
             </div>
             <div className="mb-2 text-sm">
-              <span className="font-semibold">Colors:</span> Black
+              <span className="font-semibold">Colors:</span>{" "}
+              {selectedProduct.colors?.join(",")}
             </div>
             <div className="mb-2 text-sm">
-              <span className="font-semibold">Brand:</span> Nike
+              <span className="font-semibold">Brand:</span>{" "}
+              {selectedProduct.brand}
             </div>
             <div className="mb-2 text-sm">
-              <span className="font-semibold">Material:</span> Cotton
+              <span className="font-semibold">Material:</span>{" "}
+              {selectedProduct.material}
             </div>
             <div className="mb-2 text-sm">
-              <span className="font-semibold">Stock:</span>{" "}
-              <span className="mr-2">Medium: 8</span>
+              <span className="font-semibold">Stock:</span>
+              <ul className="ml-2 list-disc list-inside">
+                {selectedProduct.stock &&
+                  Object.entries(selectedProduct.stock).map(
+                    ([size, quality]) => (
+                      <li key={size}>
+                        {" "}
+                        Size {size} :{" "}
+                        {quality > 0 ? `${quality} in stock` : "Out of stock"}{" "}
+                      </li>
+                    )
+                  )}
+              </ul>
             </div>
             <div className="mb-2 text-sm">
-              <span className="font-semibold">Rating:</span> % star rating 15
-              review
+              <span className="font-semibold">Rating:</span>{" "}
+              {selectedProduct.rating} <br></br>
+              <span className="font-semibold">Number of Review: </span>{" "}
+              {selectedProduct.numReviews}
             </div>
             <div className="mb-2 text-sm">
-              <span className="font-semibold">Featured:</span> Yes
+              <span className="font-semibold">Featured:</span>{" "}
+              {selectedProduct.isFeatured ? "Yes" : "No"}
             </div>
             <div className="mb-2 text-sm">
-              <span className="font-semibold">Tags:</span> Nike, new trending
+              <span className="font-semibold">Tags:</span>{" "}
+              {selectedProduct.tags?.join(",")}
             </div>
             <div className="mb-2 text-xs text-gray-400">
-              <span className="font-semibold">Created:</span> 2089/ 60/ 88
+              <span className="font-semibold">Created:</span>{" "}
+              {selectedProduct.createdAt.split("T")[0]}
             </div>
             <div className="mb-2 text-xs text-gray-400">
-              <span className="font-semibold">Updated:</span> 5555/88/09
+              <span className="font-semibold">Updated:</span>{" "}
+              {selectedProduct.updatedAt.split("T")[0]}
             </div>
           </div>
         </div>

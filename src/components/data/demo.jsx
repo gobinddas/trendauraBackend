@@ -1,23 +1,65 @@
-import React, { useState } from 'react'
-import { products, categories, subcategories } from '../components/data/dummydata'
-
-const getCategoryName = (catValue) => {
-  const cat = categories.find(c => c.value === catValue || c.id === catValue || c.name === catValue)
-  return cat ? cat.name : catValue
-}
-
-const getSubcategoryName = (subValue) => {
-  const sub = subcategories.find(s => s.value === subValue || s.id === subValue || s.name === subValue)
-  return sub ? sub.name : subValue
-}
+import React, { useState, useRef, useEffect } from "react";
+import {
+  products,
+  categories,
+  subcategories,
+} from "../components/data/dummydata";
 
 const ProductManagement = () => {
-  const [previewProduct, setPreviewProduct] = useState(null)
-  const [selectedCategory, setSelectedCategory] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState();
+  const [searchTerm, setSearchTerm] = useState(""); // Add search state
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const itemsperPage = 4;
+  const modalRef = useRef(null);
 
-  // Get unique categories from products
-  const uniqueCategories = Array.from(new Set(products.map(p => p.category)))
+  useEffect(() => {
+    const handleClikeOutside = (e) => {
+      if (modalRef.current && !modalRef.current.contains(e.target)) {
+        setIsPreviewOpen(false);
+      }
+    };
+    if (isPreviewOpen) {
+      document.addEventListener("mousedown", handleClikeOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClikeOutside);
+    };
+  }, [isPreviewOpen]);
 
+  // Updated filtering logic to include search
+  const filteredProducts = products.filter((p) => {
+    const matchesCategory =
+      !selectedCategory || p.categoryId === Number(selectedCategory);
+    const matchesSearch =
+      !searchTerm || p.name.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  const totalPages = Math.ceil(filteredProducts.length / itemsperPage);
+
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsperPage,
+    currentPage * itemsperPage
+  );
+
+  const getCategoryName = (id) => {
+    const cat = categories.find((item) => item.id === id);
+    return cat.name;
+  };
+
+  const getSubcategoryName = (id) => {
+    const subCat = subcategories.find((item) => item.id === id);
+    return subCat.name;
+  };
+
+  // Reset to first page when search or category changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory]);
+
+  console.log(selectedCategory);
   return (
     <div className="p-6">
       {/* Top Controls */}
@@ -30,150 +72,234 @@ const ProductManagement = () => {
         <input
           type="text"
           placeholder="Search product..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
           className="border px-3 py-2 rounded w-full md:w-1/3"
         />
         {/* Category Filter */}
         <div className="flex gap-2 w-full md:w-auto">
           <select
-            className="border px-3 py-2 rounded w-full"
             value={selectedCategory}
-            onChange={e => setSelectedCategory(e.target.value)}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="border px-3 py-2 rounded w-full"
           >
             <option value="">All Categories</option>
-            {uniqueCategories.map(cat => (
-              <option key={cat} value={cat}>
-                {getCategoryName(cat)}
+            {categories.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
               </option>
             ))}
           </select>
         </div>
       </div>
 
-      {/* Product Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {products
-          .filter(p => !selectedCategory || p.category === selectedCategory)
-          .slice(0, 16)
-          .map(product => (
-            <div key={product.id} className="bg-white rounded shadow p-4 flex flex-col">
+      {/* Product Grid or No Results Message */}
+      {filteredProducts.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-gray-500 text-lg mb-2">No products found</div>
+          <div className="text-gray-400 text-sm">
+            {searchTerm && selectedCategory
+              ? `No products match "${searchTerm}" in the selected category`
+              : searchTerm
+              ? `No products match "${searchTerm}"`
+              : "No products in the selected category"}
+          </div>
+          {(searchTerm || selectedCategory) && (
+            <button
+              onClick={() => {
+                setSearchTerm("");
+                setSelectedCategory("");
+              }}
+              className="mt-4 text-blue-600 hover:text-blue-800 underline"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {paginatedProducts.map((item) => (
+            <div
+              key={item.id}
+              className="bg-white rounded shadow p-4 flex flex-col"
+            >
               <div className="relative group mb-3">
                 <img
-                  src={product.mainImage}
-                  alt={product.name}
+                  src={item.mainImage}
+                  alt="name"
                   className="h-40 w-full object-cover rounded"
                 />
                 <button
                   className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-50 transition text-white opacity-0 group-hover:opacity-100 rounded"
-                  onClick={() => setPreviewProduct(product)}
+                  onClick={() => {
+                    setIsPreviewOpen(true);
+                    setSelectedProduct(item);
+                  }}
                 >
                   Preview
                 </button>
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-lg">{product.name}</h3>
+                <h3 className="font-semibold text-lg">{item.name}</h3>
                 <div className="text-sm text-gray-500 mb-1">
-                  {getCategoryName(product.category)} / {getSubcategoryName(product.subcategory)}
+                  {getCategoryName(item.categoryId)}/{" "}
+                  {getSubcategoryName(item.subcategoryId)}
                 </div>
                 <div className="font-bold text-blue-600 mb-1">
-                  ₹{product.discountPrice || product.price}
-                  {product.discountPrice && (
-                    <span className="text-gray-400 line-through ml-2 text-sm">₹{product.price}</span>
-                  )}
+                  {item.price}
+                  <span className="text-gray-400 line-through ml-2 text-sm">
+                    {item.discountPrice}
+                  </span>
                 </div>
-                <div className="text-xs text-gray-400">Brand: {product.brand}</div>
+                <div className="text-xs text-gray-400">Brand: {item.brand}</div>
               </div>
             </div>
           ))}
-      </div>
+        </div>
+      )}
 
-      {/* Pagination */}
-      <div className="flex justify-center mt-8 gap-2">
-        <button className="px-3 py-1 rounded border bg-white hover:bg-gray-100">Prev</button>
-        <button className="px-3 py-1 rounded border bg-blue-600 text-white">1</button>
-        <button className="px-3 py-1 rounded border bg-white hover:bg-gray-100">2</button>
-        <button className="px-3 py-1 rounded border bg-white hover:bg-gray-100">Next</button>
-      </div>
+      {/* Pagination - Only show if there are products */}
+      {filteredProducts.length > 0 && (
+        <div className="flex justify-center mt-8 gap-2">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-1 rounded border bg-white hover:bg-gray-100 disabled:opacity-50"
+          >
+            Prev
+          </button>
+          {[...Array(totalPages)].map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentPage(i + 1)}
+              className={`px-3 py-1 rounded border ${
+                currentPage === i + 1
+                  ? "bg-blue-600 text-white"
+                  : "bg-white hover:bg-gray-100"
+              }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+
+          <button
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 rounded border bg-white hover:bg-gray-100"
+          >
+            Next
+          </button>
+        </div>
+      )}
 
       {/* Preview Modal */}
-      {previewProduct && (
+      {isPreviewOpen && selectedProduct && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl relative overflow-y-auto max-h-[90vh]">
-            {/* Close Button */}
+          <div
+            ref={modalRef}
+            className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl relative overflow-y-auto max-h-[90vh]"
+          >
             <button
               className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl"
-              onClick={() => setPreviewProduct(null)}
               aria-label="Close preview"
+              onClick={() => setIsPreviewOpen(false)}
             >
               ×
             </button>
-            {/* All Images */}
             <div className="flex gap-2 mb-4">
               <img
-                src={previewProduct.mainImage}
-                alt={previewProduct.name}
+                src={selectedProduct.mainImage}
+                alt="main image"
                 className="w-40 h-40 object-cover rounded border"
               />
               <div className="flex flex-col gap-2">
-                {previewProduct.secondaryImages && previewProduct.secondaryImages.map((img, idx) => (
+                {selectedProduct.secondaryImages?.map((img, i) => (
                   <img
-                    key={idx}
                     src={img}
-                    alt={`${previewProduct.name} ${idx + 1}`}
+                    key={i}
+                    alt="other images"
+                    alt={`${selectedProduct.name} ${i + 1}`}
                     className="w-20 h-20 object-cover rounded border"
                   />
                 ))}
               </div>
             </div>
-            {/* All Details */}
-            <h2 className="text-2xl font-bold mb-2">{previewProduct.name}</h2>
+            <h2 className="text-2xl font-bold mb-2">
+              {" "}
+              {selectedProduct.name}{" "}
+            </h2>
             <div className="mb-2 text-gray-600">
-              <span className="font-semibold">Category:</span> {getCategoryName(previewProduct.category)} / {getSubcategoryName(previewProduct.subcategory)}
+              <span className="font-semibold">Category:</span>{" "}
+              {getCategoryName(selectedProduct.categoryId)} /{" "}
+              {getSubcategoryName(selectedProduct.subcategoryId)}
             </div>
-            <div className="mb-2">{previewProduct.description}</div>
+            <div className="mb-2">{selectedProduct.description}</div>
             <div className="mb-2 font-bold text-blue-600">
-              ₹{previewProduct.discountPrice || previewProduct.price}
-              {previewProduct.discountPrice && (
-                <span className="text-gray-400 line-through ml-2 text-sm">₹{previewProduct.price}</span>
-              )}
+              NPR {selectedProduct.price}
+              <span className="text-gray-400 line-through ml-2 text-sm">
+                NPR{selectedProduct.discountPrice}
+              </span>
             </div>
             <div className="mb-2 text-sm">
-              <span className="font-semibold">Sizes:</span> {previewProduct.sizes?.join(', ')}
+              <span className="font-semibold">Sizes:</span>{" "}
+              {selectedProduct.sizes?.join(",")}
             </div>
             <div className="mb-2 text-sm">
-              <span className="font-semibold">Colors:</span> {previewProduct.colors?.join(', ')}
+              <span className="font-semibold">Colors:</span>{" "}
+              {selectedProduct.colors?.join(",")}
             </div>
             <div className="mb-2 text-sm">
-              <span className="font-semibold">Brand:</span> {previewProduct.brand}
+              <span className="font-semibold">Brand:</span>{" "}
+              {selectedProduct.brand}
             </div>
             <div className="mb-2 text-sm">
-              <span className="font-semibold">Material:</span> {previewProduct.material}
+              <span className="font-semibold">Material:</span>{" "}
+              {selectedProduct.material}
             </div>
             <div className="mb-2 text-sm">
-              <span className="font-semibold">Stock:</span>{" "}
-              {previewProduct.stock && Object.entries(previewProduct.stock).map(([size, qty]) => (
-                <span key={size} className="mr-2">{size}: {qty}</span>
-              ))}
+              <span className="font-semibold">Stock:</span>
+              <ul className="ml-2 list-disc list-inside">
+                {selectedProduct.stock &&
+                  Object.entries(selectedProduct.stock).map(
+                    ([size, quality]) => (
+                      <li key={size}>
+                        {" "}
+                        Size {size} :{" "}
+                        {quality > 0 ? `${quality} in stock` : "Out of stock"}{" "}
+                      </li>
+                    )
+                  )}
+              </ul>
             </div>
             <div className="mb-2 text-sm">
-              <span className="font-semibold">Rating:</span> {previewProduct.rating} ({previewProduct.numReviews} reviews)
+              <span className="font-semibold">Rating:</span>{" "}
+              {selectedProduct.rating} <br></br>
+              <span className="font-semibold">Number of Review: </span>{" "}
+              {selectedProduct.numReviews}
             </div>
             <div className="mb-2 text-sm">
-              <span className="font-semibold">Featured:</span> {previewProduct.isFeatured ? "Yes" : "No"}
+              <span className="font-semibold">Featured:</span>{" "}
+              {selectedProduct.isFeatured ? "Yes" : "No"}
             </div>
             <div className="mb-2 text-sm">
-              <span className="font-semibold">Tags:</span> {previewProduct.tags?.join(', ')}
+              <span className="font-semibold">Tags:</span>{" "}
+              {selectedProduct.tags?.join(",")}
             </div>
             <div className="mb-2 text-xs text-gray-400">
-              <span className="font-semibold">Created:</span> {new Date(previewProduct.createdAt).toLocaleString()}
+              <span className="font-semibold">Created:</span>{" "}
+              {selectedProduct.createdAt.split("T")[0]}
             </div>
             <div className="mb-2 text-xs text-gray-400">
-              <span className="font-semibold">Updated:</span> {new Date(previewProduct.updatedAt).toLocaleString()}
+              <span className="font-semibold">Updated:</span>{" "}
+              {selectedProduct.updatedAt.split("T")[0]}
             </div>
           </div>
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default ProductManagement
+export default ProductManagement;
