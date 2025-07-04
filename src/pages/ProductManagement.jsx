@@ -4,6 +4,8 @@ import {
   categories,
   subcategories,
 } from "../components/data/dummydata";
+import ProductModal from "../components/ProductModal";
+import { Edit } from "lucide-react";
 
 const ProductManagement = () => {
   const [selectedCategory, setSelectedCategory] = useState();
@@ -13,6 +15,8 @@ const ProductManagement = () => {
   const itemsperPage = 4;
   const modalRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const[editProduct, setEditProduct] = useState(null);
 
   useEffect(() => {
     const handleClikeOutside = (e) => {
@@ -67,7 +71,12 @@ const ProductManagement = () => {
       {/* Top Controls */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         {/* Add Product Button */}
-        <button className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 w-full md:w-auto">
+        <button className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 w-full md:w-auto" 
+        onClick={()=> {
+          setEditProduct(null);
+          setIsProductModalOpen(true)
+        }}
+        >
           + Add Product
         </button>
         {/* Search Bar */}
@@ -100,7 +109,7 @@ const ProductManagement = () => {
         {paginatedProducts.map((item) => (
           <div
             key={item.id}
-            className="bg-white rounded shadow p-4 flex flex-col"
+            className="bg-white rounded shadow p-4 flex flex-col relative"
           >
             <div className="relative group mb-3">
               <img
@@ -132,6 +141,14 @@ const ProductManagement = () => {
               </div>
               <div className="text-xs text-gray-400">Brand: {item.brand}</div>
             </div>
+            <button className="absolute top-2 right-2 text-gray-500 hover:text-blue-600" 
+            onClick={()=> {
+              setEditProduct(item)
+              setIsProductModalOpen(true)
+            }}
+            >
+              <Edit size={20}/>
+            </button>
           </div>
         ))}
       </div>
@@ -274,6 +291,15 @@ const ProductManagement = () => {
           </div>
         </div>
       )}
+
+      <ProductModal
+      open={isProductModalOpen}
+      onClose={()=> setIsProductModalOpen(false) }
+      onSave={(product)=> {
+        setIsProductModalOpen(false)
+      }}
+      editProduct={editProduct}
+      />
     </div>
   );
 };

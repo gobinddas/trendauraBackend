@@ -1,305 +1,134 @@
-import React, { useState, useRef, useEffect } from "react";
-import {
-  products,
-  categories,
-  subcategories,
-} from "../components/data/dummydata";
+import React, { useState, useEffect } from 'react';
+import { categories, subcategories } from './data/dummydata';
 
-const ProductManagement = () => {
-  const [selectedCategory, setSelectedCategory] = useState();
-  const [searchTerm, setSearchTerm] = useState(""); // Add search state
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const itemsperPage = 4;
-  const modalRef = useRef(null);
+const initialProduct = {
+  id: '',
+  name: '',
+  slug: '',
+  description: '',
+  categoryId: '',
+  subcategoryId: '',
+  price: '',
+  sizes: [],
+  colors: [],
+  mainImage: '',
+  secondaryImages: [],
+  stock: {},
+  material: '',
+  brand: '',
+  rating: '',
+  numReviews: '',
+  isFeatured: false,
+  tags: [],
+  createdAt: '',
+  updatedAt: ''
+};
+
+const sizeOptions = ['S', 'M', 'L', 'XL'];
+
+const ProductModal = ({
+  open,
+  onClose,
+  onSave,
+  editProduct
+}) => {
+  const [product, setProduct] = useState(initialProduct);
 
   useEffect(() => {
-    const handleClikeOutside = (e) => {
-      if (modalRef.current && !modalRef.current.contains(e.target)) {
-        setIsPreviewOpen(false);
-      }
-    };
-    if (isPreviewOpen) {
-      document.addEventListener("mousedown", handleClikeOutside);
+    if (editProduct) {
+      setProduct(editProduct);
+    } else {
+      setProduct(initialProduct);
     }
-    return () => {
-      document.removeEventListener("mousedown", handleClikeOutside);
-    };
-  }, [isPreviewOpen]);
+  }, [editProduct, open]);
 
-  // Updated filtering logic to include search
-  const filteredProducts = products.filter((p) => {
-    const matchesCategory =
-      !selectedCategory || p.categoryId === Number(selectedCategory);
-    const matchesSearch =
-      !searchTerm || p.name.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  if (!open) return null;
 
-  const totalPages = Math.ceil(filteredProducts.length / itemsperPage);
-
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * itemsperPage,
-    currentPage * itemsperPage
-  );
-
-  const getCategoryName = (id) => {
-    const cat = categories.find((item) => item.id === id);
-    return cat.name;
+  const handleArrayChange = (field, value) => {
+    setProduct(prev => ({
+      ...prev,
+      [field]: value.split(',').map(v => v.trim())
+    }));
   };
 
-  const getSubcategoryName = (id) => {
-    const subCat = subcategories.find((item) => item.id === id);
-    return subCat.name;
+  const handleStockChange = (size, value) => {
+    setProduct(prev => ({
+      ...prev,
+      stock: { ...prev.stock, [size]: Number(value) }
+    }));
   };
 
-  // Reset to first page when search or category changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, selectedCategory]);
-
-  console.log(selectedCategory);
   return (
-    <div className="p-6">
-      {/* Top Controls */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        {/* Add Product Button */}
-        <button className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 w-full md:w-auto">
-          + Add Product
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+      <div className="relative bg-white rounded-lg shadow-lg w-full max-w-lg p-8 overflow-y-auto max-h-[90vh]">
+        {/* Cross Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl font-bold focus:outline-none"
+          aria-label="Close modal"
+          type="button"
+        >
+          &times;
         </button>
-        {/* Search Bar */}
-        <input
-          type="text"
-          placeholder="Search product..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="border px-3 py-2 rounded w-full md:w-1/3"
-        />
-        {/* Category Filter */}
-        <div className="flex gap-2 w-full md:w-auto">
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="border px-3 py-2 rounded w-full"
-          >
-            <option value="">All Categories</option>
-            {categories.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
+        <h2 className="text-2xl font-bold mb-6 text-center">{editProduct ? 'Edit Product' : 'Add Product'}</h2>
+        <form
+          onSubmit={e => {
+            e.preventDefault();
+            onSave(product);
+          }}
+          className="flex flex-col gap-4"
+        >
+          <input className="border rounded px-3 py-2" placeholder="ID" value={product.id} onChange={e => setProduct({ ...product, id: e.target.value })} required />
+          <input className="border rounded px-3 py-2" placeholder="Name" value={product.name} onChange={e => setProduct({ ...product, name: e.target.value })} required />
+          <input className="border rounded px-3 py-2" placeholder="Slug" value={product.slug} onChange={e => setProduct({ ...product, slug: e.target.value })} required />
+          <textarea className="border rounded px-3 py-2" placeholder="Description" value={product.description} onChange={e => setProduct({ ...product, description: e.target.value })} required />
+          <select className="border rounded px-3 py-2" value={product.categoryId} onChange={e => setProduct({ ...product, categoryId: Number(e.target.value), subcategoryId: '' })} required>
+            <option value="">Select Category</option>
+            {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+          </select>
+          <select className="border rounded px-3 py-2" value={product.subcategoryId} onChange={e => setProduct({ ...product, subcategoryId: Number(e.target.value) })} required>
+            <option value="">Select Subcategory</option>
+            {subcategories.filter(sub => sub.categoryId === Number(product.categoryId)).map(sub => (
+              <option key={sub.id} value={sub.id}>{sub.name}</option>
             ))}
           </select>
-        </div>
-      </div>
-
-      {/* Product Grid or No Results Message */}
-      {filteredProducts.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-500 text-lg mb-2">No products found</div>
-          <div className="text-gray-400 text-sm">
-            {searchTerm && selectedCategory
-              ? `No products match "${searchTerm}" in the selected category`
-              : searchTerm
-              ? `No products match "${searchTerm}"`
-              : "No products in the selected category"}
-          </div>
-          {(searchTerm || selectedCategory) && (
-            <button
-              onClick={() => {
-                setSearchTerm("");
-                setSelectedCategory("");
-              }}
-              className="mt-4 text-blue-600 hover:text-blue-800 underline"
-            >
-              Clear filters
-            </button>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {paginatedProducts.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white rounded shadow p-4 flex flex-col"
-            >
-              <div className="relative group mb-3">
-                <img
-                  src={item.mainImage}
-                  alt="name"
-                  className="h-40 w-full object-cover rounded"
+          <input className="border rounded px-3 py-2" type="number" placeholder="Price" value={product.price} onChange={e => setProduct({ ...product, price: Number(e.target.value) })} required />
+          <input className="border rounded px-3 py-2" placeholder="Sizes (comma separated)" value={product.sizes.join(', ')} onChange={e => handleArrayChange('sizes', e.target.value)} />
+          <input className="border rounded px-3 py-2" placeholder="Colors (comma separated)" value={product.colors.join(', ')} onChange={e => handleArrayChange('colors', e.target.value)} />
+          <input className="border rounded px-3 py-2" placeholder="Main Image URL" value={product.mainImage} onChange={e => setProduct({ ...product, mainImage: e.target.value })} />
+          <input className="border rounded px-3 py-2" placeholder="Secondary Images (comma separated)" value={product.secondaryImages.join(', ')} onChange={e => handleArrayChange('secondaryImages', e.target.value)} />
+          <div>
+            <label className="block font-medium mb-1">Stock:</label>
+            <div className="flex gap-2">
+              {sizeOptions.map(size => (
+                <input
+                  key={size}
+                  type="number"
+                  min={0}
+                  placeholder={size}
+                  value={product.stock[size] || ''}
+                  onChange={e => handleStockChange(size, e.target.value)}
+                  className="border rounded px-2 py-1 w-16"
                 />
-                <button
-                  className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-50 transition text-white opacity-0 group-hover:opacity-100 rounded"
-                  onClick={() => {
-                    setIsPreviewOpen(true);
-                    setSelectedProduct(item);
-                  }}
-                >
-                  Preview
-                </button>
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg">{item.name}</h3>
-                <div className="text-sm text-gray-500 mb-1">
-                  {getCategoryName(item.categoryId)}/{" "}
-                  {getSubcategoryName(item.subcategoryId)}
-                </div>
-                <div className="font-bold text-blue-600 mb-1">
-                  {item.price}
-                  <span className="text-gray-400 line-through ml-2 text-sm">
-                    {item.discountPrice}
-                  </span>
-                </div>
-                <div className="text-xs text-gray-400">Brand: {item.brand}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Pagination - Only show if there are products */}
-      {filteredProducts.length > 0 && (
-        <div className="flex justify-center mt-8 gap-2">
-          <button
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-            className="px-3 py-1 rounded border bg-white hover:bg-gray-100 disabled:opacity-50"
-          >
-            Prev
-          </button>
-          {[...Array(totalPages)].map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentPage(i + 1)}
-              className={`px-3 py-1 rounded border ${
-                currentPage === i + 1
-                  ? "bg-blue-600 text-white"
-                  : "bg-white hover:bg-gray-100"
-              }`}
-            >
-              {i + 1}
-            </button>
-          ))}
-
-          <button
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-            }
-            disabled={currentPage === totalPages}
-            className="px-3 py-1 rounded border bg-white hover:bg-gray-100"
-          >
-            Next
-          </button>
-        </div>
-      )}
-
-      {/* Preview Modal */}
-      {isPreviewOpen && selectedProduct && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div
-            ref={modalRef}
-            className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl relative overflow-y-auto max-h-[90vh]"
-          >
-            <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl"
-              aria-label="Close preview"
-              onClick={() => setIsPreviewOpen(false)}
-            >
-              ×
-            </button>
-            <div className="flex gap-2 mb-4">
-              <img
-                src={selectedProduct.mainImage}
-                alt="main image"
-                className="w-40 h-40 object-cover rounded border"
-              />
-              <div className="flex flex-col gap-2">
-                {selectedProduct.secondaryImages?.map((img, i) => (
-                  <img
-                    src={img}
-                    key={i}
-                    alt="other images"
-                    alt={`${selectedProduct.name} ${i + 1}`}
-                    className="w-20 h-20 object-cover rounded border"
-                  />
-                ))}
-              </div>
-            </div>
-            <h2 className="text-2xl font-bold mb-2">
-              {" "}
-              {selectedProduct.name}{" "}
-            </h2>
-            <div className="mb-2 text-gray-600">
-              <span className="font-semibold">Category:</span>{" "}
-              {getCategoryName(selectedProduct.categoryId)} /{" "}
-              {getSubcategoryName(selectedProduct.subcategoryId)}
-            </div>
-            <div className="mb-2">{selectedProduct.description}</div>
-            <div className="mb-2 font-bold text-blue-600">
-              NPR {selectedProduct.price}
-              <span className="text-gray-400 line-through ml-2 text-sm">
-                NPR{selectedProduct.discountPrice}
-              </span>
-            </div>
-            <div className="mb-2 text-sm">
-              <span className="font-semibold">Sizes:</span>{" "}
-              {selectedProduct.sizes?.join(",")}
-            </div>
-            <div className="mb-2 text-sm">
-              <span className="font-semibold">Colors:</span>{" "}
-              {selectedProduct.colors?.join(",")}
-            </div>
-            <div className="mb-2 text-sm">
-              <span className="font-semibold">Brand:</span>{" "}
-              {selectedProduct.brand}
-            </div>
-            <div className="mb-2 text-sm">
-              <span className="font-semibold">Material:</span>{" "}
-              {selectedProduct.material}
-            </div>
-            <div className="mb-2 text-sm">
-              <span className="font-semibold">Stock:</span>
-              <ul className="ml-2 list-disc list-inside">
-                {selectedProduct.stock &&
-                  Object.entries(selectedProduct.stock).map(
-                    ([size, quality]) => (
-                      <li key={size}>
-                        {" "}
-                        Size {size} :{" "}
-                        {quality > 0 ? `${quality} in stock` : "Out of stock"}{" "}
-                      </li>
-                    )
-                  )}
-              </ul>
-            </div>
-            <div className="mb-2 text-sm">
-              <span className="font-semibold">Rating:</span>{" "}
-              {selectedProduct.rating} <br></br>
-              <span className="font-semibold">Number of Review: </span>{" "}
-              {selectedProduct.numReviews}
-            </div>
-            <div className="mb-2 text-sm">
-              <span className="font-semibold">Featured:</span>{" "}
-              {selectedProduct.isFeatured ? "Yes" : "No"}
-            </div>
-            <div className="mb-2 text-sm">
-              <span className="font-semibold">Tags:</span>{" "}
-              {selectedProduct.tags?.join(",")}
-            </div>
-            <div className="mb-2 text-xs text-gray-400">
-              <span className="font-semibold">Created:</span>{" "}
-              {selectedProduct.createdAt.split("T")[0]}
-            </div>
-            <div className="mb-2 text-xs text-gray-400">
-              <span className="font-semibold">Updated:</span>{" "}
-              {selectedProduct.updatedAt.split("T")[0]}
+              ))}
             </div>
           </div>
-        </div>
-      )}
+          <input className="border rounded px-3 py-2" placeholder="Material" value={product.material} onChange={e => setProduct({ ...product, material: e.target.value })} />
+          <input className="border rounded px-3 py-2" placeholder="Brand" value={product.brand} onChange={e => setProduct({ ...product, brand: e.target.value })} />
+          <input className="border rounded px-3 py-2" type="number" step="0.1" placeholder="Rating" value={product.rating} onChange={e => setProduct({ ...product, rating: Number(e.target.value) })} />
+          <input className="border rounded px-3 py-2" type="number" placeholder="Number of Reviews" value={product.numReviews} onChange={e => setProduct({ ...product, numReviews: Number(e.target.value) })} />
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={product.isFeatured} onChange={e => setProduct({ ...product, isFeatured: e.target.checked })} />
+            Featured
+          </label>
+          <input className="border rounded px-3 py-2" placeholder="Tags (comma separated)" value={product.tags.join(', ')} onChange={e => handleArrayChange('tags', e.target.value)} />
+          <input className="border rounded px-3 py-2" type="datetime-local" placeholder="Created At" value={product.createdAt ? product.createdAt.slice(0, 16) : ''} onChange={e => setProduct({ ...product, createdAt: e.target.value })} />
+          <input className="border rounded px-3 py-2" type="datetime-local" placeholder="Updated At" value={product.updatedAt ? product.updatedAt.slice(0, 16) : ''} onChange={e => setProduct({ ...product, updatedAt: e.target.value })} />
+          <button type="submit" className="bg-blue-600 text-white rounded py-2 mt-2 hover:bg-blue-700 transition">{editProduct ? 'Update' : 'Add'} Product</button>
+        </form>
+      </div>
     </div>
   );
 };
 
-export default ProductManagement;
+export default ProductModal;
