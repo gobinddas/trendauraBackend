@@ -7,7 +7,9 @@ import {
 
 const ProductManagement = () => {
   const [selectedCategory, setSelectedCategory] = useState();
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const itemsperPage = 4;
 
   const filteredProducts = products.filter(
@@ -18,7 +20,7 @@ const ProductManagement = () => {
 
   const paginatedProducts = filteredProducts.slice(
     (currentPage - 1) * itemsperPage,
-    currentPage *itemsperPage
+    currentPage * itemsperPage
   );
 
   const getCategoryName = (id) => {
@@ -76,7 +78,9 @@ const ProductManagement = () => {
                 alt="name"
                 className="h-40 w-full object-cover rounded"
               />
-              <button className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-50 transition text-white opacity-0 group-hover:opacity-100 rounded">
+              <button className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-50 transition text-white opacity-0 group-hover:opacity-100 rounded" 
+              onClick={()=> {setIsPreviewOpen(true);
+                setSelectedProduct(item);}} >
                 Preview
               </button>
             </div>
@@ -108,89 +112,101 @@ const ProductManagement = () => {
           Prev
         </button>
         {[...Array(totalPages)].map((_, i) => (
-          <button  key={i} onClick={()=> setCurrentPage(i + 1)}    className={`px-3 py-1 rounded border ${
-        currentPage === i + 1 ? "bg-blue-600 text-white" : "bg-white hover:bg-gray-100"
-      }`}>
+          <button
+            key={i}
+            onClick={() => setCurrentPage(i + 1)}
+            className={`px-3 py-1 rounded border ${
+              currentPage === i + 1
+                ? "bg-blue-600 text-white"
+                : "bg-white hover:bg-gray-100"
+            }`}
+          >
             {i + 1}
           </button>
         ))}
 
-        <button 
-        onClick={()=> setCurrentPage((prev)=> Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}
-        className="px-3 py-1 rounded border bg-white hover:bg-gray-100">
+        <button
+          onClick={() =>
+            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+          }
+          disabled={currentPage === totalPages}
+          className="px-3 py-1 rounded border bg-white hover:bg-gray-100"
+        >
           Next
         </button>
       </div>
 
       {/* Preview Modal */}
-
-      {/* <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl relative overflow-y-auto max-h-[90vh]">
-          <button
-            className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl"
-            aria-label="Close preview"
-          >
-            ×
-          </button>
-          <div className="flex gap-2 mb-4">
-            <img
-              src="./banner1.jpg"
-              alt="main image"
-              className="w-40 h-40 object-cover rounded border"
-            />
-            <div className="flex flex-col gap-2">
+      {isPreviewOpen && selectedProduct &&(
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl relative overflow-y-auto max-h-[90vh]">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl"
+              aria-label="Close preview" onClick={()=> setIsPreviewOpen(false)}
+            >
+              ×
+            </button>
+            <div className="flex gap-2 mb-4">
               <img
-                src="./banner1.jpg"
-                alt="other images"
-                className="w-20 h-20 object-cover rounded border"
+                src={selectedProduct.mainImage}
+                alt="main image"
+                className="w-40 h-40 object-cover rounded border"
               />
+              <div className="flex flex-col gap-2">
+                {selectedProduct.otherImages?.map(img, i)=>{}}
+                <img
+                  src="./banner1.jpg"
+                  alt="other images"
+                  className="w-20 h-20 object-cover rounded border"
+                />
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Black Hoodie</h2>
+            <div className="mb-2 text-gray-600">
+              <span className="font-semibold">Category:</span> Men / Hoodie
+            </div>
+            <div className="mb-2">Good authenticated product</div>
+            <div className="mb-2 font-bold text-blue-600">
+              ₹1800
+              <span className="text-gray-400 line-through ml-2 text-sm">
+                ₹700
+              </span>
+            </div>
+            <div className="mb-2 text-sm">
+              <span className="font-semibold">Sizes:</span> l
+            </div>
+            <div className="mb-2 text-sm">
+              <span className="font-semibold">Colors:</span> Black
+            </div>
+            <div className="mb-2 text-sm">
+              <span className="font-semibold">Brand:</span> Nike
+            </div>
+            <div className="mb-2 text-sm">
+              <span className="font-semibold">Material:</span> Cotton
+            </div>
+            <div className="mb-2 text-sm">
+              <span className="font-semibold">Stock:</span>{" "}
+              <span className="mr-2">Medium: 8</span>
+            </div>
+            <div className="mb-2 text-sm">
+              <span className="font-semibold">Rating:</span> % star rating 15
+              review
+            </div>
+            <div className="mb-2 text-sm">
+              <span className="font-semibold">Featured:</span> Yes
+            </div>
+            <div className="mb-2 text-sm">
+              <span className="font-semibold">Tags:</span> Nike, new trending
+            </div>
+            <div className="mb-2 text-xs text-gray-400">
+              <span className="font-semibold">Created:</span> 2089/ 60/ 88
+            </div>
+            <div className="mb-2 text-xs text-gray-400">
+              <span className="font-semibold">Updated:</span> 5555/88/09
             </div>
           </div>
-          <h2 className="text-2xl font-bold mb-2">Black Hoodie</h2>
-          <div className="mb-2 text-gray-600">
-            <span className="font-semibold">Category:</span> Men / Hoodie
-          </div>
-          <div className="mb-2">Good authenticated product</div>
-          <div className="mb-2 font-bold text-blue-600">
-            ₹1800
-            <span className="text-gray-400 line-through ml-2 text-sm">
-              ₹700
-            </span>
-          </div>
-          <div className="mb-2 text-sm">
-            <span className="font-semibold">Sizes:</span> l
-          </div>
-          <div className="mb-2 text-sm">
-            <span className="font-semibold">Colors:</span> Black
-          </div>
-          <div className="mb-2 text-sm">
-            <span className="font-semibold">Brand:</span> Nike
-          </div>
-          <div className="mb-2 text-sm">
-            <span className="font-semibold">Material:</span> Cotton
-          </div>
-          <div className="mb-2 text-sm">
-            <span className="font-semibold">Stock:</span>{" "}
-            <span className="mr-2">Medium: 8</span>
-          </div>
-          <div className="mb-2 text-sm">
-            <span className="font-semibold">Rating:</span> % star rating 15
-            review
-          </div>
-          <div className="mb-2 text-sm">
-            <span className="font-semibold">Featured:</span> Yes
-          </div>
-          <div className="mb-2 text-sm">
-            <span className="font-semibold">Tags:</span> Nike, new trending
-          </div>
-          <div className="mb-2 text-xs text-gray-400">
-            <span className="font-semibold">Created:</span> 2089/ 60/ 88
-          </div>
-          <div className="mb-2 text-xs text-gray-400">
-            <span className="font-semibold">Updated:</span> 5555/88/09
-          </div>
         </div>
-      </div> */}
+      )}
     </div>
   );
 };
